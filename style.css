@@ -1,49 +1,227 @@
 @keyframes titleDrop {
     0% {
-        transform: translateY(-2em);
+        transform: translateY(-100%);
     }
-
     100% {
         transform: translateY(0);
     }
 }
 
+img {
+    max-width: 100%;
+}
+
+.spinner {
+    display: inline-block;
+    width: 8em;
+    height: 8em;
+}
+
+.spinner:after {
+    content: " ";
+    display: block;
+    width: 4em;
+    height: 4em;
+    margin: 2em;
+    border-radius: 50%;
+    border-bottom: 0.25em solid #000;
+    animation: spin .2s linear infinite;
+}
+
+
+#articleLoader {
+    display: flex;
+    flex-direction: column;
+}
+
+#articleLoader > * {
+    margin: 0 auto;
+}
+
+/* If the browser is modern and has JS disabled,
+this is gonna show the JS requirement notice after
+a while (so no notice is shown when the browser
+support JS and CSS3, since this element is hidden
+from JS before the CSS3 animation shows it)*/
+@keyframes fadeInAfterHalf {
+  0% {
+    opacity: 0;
+  }
+  90% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+#noJavaScriptNotice {
+    animation: fadeInAfterHalf 3s linear 1;
+}
+
+
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 body {
     margin: 0;
-    font-size: 2em;
+    font-size: 1em;
+    font-family: 'Exo', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+        font-family: 'Encode Sans Condensed', sans-serif;
 }
 
 header {
-    width: 120%;
-    height: 5em;
+    display: block;
     position: fixed;
-    top:-2em;
-    left:-10%;
+    top: -6em;
     background-color: #fff;
     border-bottom: 1px solid #ddd;
-    box-shadow: 0px 0.1em 1em rgba(0,0,0,0.2);
+    box-shadow: 0px 0.1em 1em rgba(0, 0, 0, 0.2);
     animation: titleDrop 1s cubic-bezier(0.4, 1.8, 0.5, 1) 0s;
     z-index: 1000;
-}
-
-footer {
-
-}
-
-article {
-    
+    padding-top: 6em;
+    width: 100%;
 }
 
 .headerContent {
-    margin-top: 3em;
-    margin-left: 11%;
-    width: 78%;
-    z-index: 0;
+    /*! margin-top: 4em; */
+    /*! margin-left: 10%; */
+    margin: 2em auto;
+    text-transform: uppercase;
+    display: flex;
+    max-width: 1024px;
 }
 
-.contentWrapper {
-    margin-top: 4em;
+.headerLogo {
+    height: 3em;
+    width: auto;
 }
+
+.headerText {
+    letter-spacing: 0.25em;
+    margin: 0 auto;
+    color: #fff;
+    text-shadow: 
+        0 0.05em 0 #ccc,
+        0 0.10em 0 #aaa,
+        0 0.15em 0 #888,
+        0 0.2em 0.2em rgba(0, 0, 0, 1),
+        0 0.2em 0.6em rgba(0, 0, 0, 1);
+}
+
+.headerNav {
+    
+    display: flex;
+    margin-left: auto;
+}
+
+a {
+    color: #000;
+    font-weight: bold;
+    text-decoration: none;
+    border-bottom: 1px solid;
+}
+
+.headerNav > a {
+    align-self:center;
+    padding: 0.2em 0.5em;
+    font-weight: normal;
+    border: none;
+    border-right: 0.1em solid;
+}
+
+.headerNav > a:last-child {
+    border: none;
+}
+
+footer {}
+
+@keyframes articlePop {
+    0% {
+        transform: scaleY(0);
+    }
+    100% {
+        transform: scaleY(1);
+    }
+}
+
+article {
+        box-shadow: 
+            0 1em 0.9em #eee, 
+            0 1.5em 0.9em #888, 
+            0 2em 0.0em #444, 
+            0 0em 0.2em rgba(0, 0, 0, 0.2),
+            0 2.2em 0.8em #000, 
+            0 2.1em 0.4em #000, 
+            0 2.0em 0.2em #000;
+        margin: 6em auto !important;
+        animation: articlePop 1s cubic-bezier(0.4, 1.8, 0.5, 1) 0s;
+}
+
+.articleSection {
+    
+}
+
+.articleClipper {
+    overflow: hidden;
+}
+
+#contentWrapper {
+    margin: 10em auto;
+    max-width: 1024px;
+    /*! margin: auto; */
+}
+
+.articleHeader {
+    padding: 2em 2em 1em 2em;
+    box-shadow: 0 0.5em 0.5em rgba(0,0,0,0.1);
+}
+
+.articleHeaderBottomLine {
+    display: flex;
+    color: #fff;
+    text-shadow:
+        0 0.05em 0.0em #eee,
+        0 0.1em 0.1em #000,
+        0 0.1em 0.2em #000;
+}
+
+
+.articleTitle {
+    margin: 0 0 0.5em 0;
+/*     color: #fff;
+        text-shadow: 
+        0 0.05em 0 #ccc,
+        0 0.10em 0 #aaa,
+        0 0.15em 0 #888,
+        0 0.2em 0.2em rgba(0, 0, 0, 1),
+        0 0.2em 0.6em rgba(0, 0, 0, 1); */
+}
+
+.articleAuthor{
+    flex-grow: 1;
+    text-transform: uppercase;
+}
+
+.articleDateTime{
+    
+}
+
+
+.articleContent {
+    padding: 2em;
+}
+
 
 .username:after {
     content: "Insert your user name";

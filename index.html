@@ -26,8 +26,10 @@
     <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
 
     <!-- Google Fonts -->
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Sofia&effect=neon|outline|emboss|shadow-multiple">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Condensed&family=Exo&display=swap"
+        rel="stylesheet">
 
     <!-- CSS3 Animations -->
     <link rel="stylesheet" href="style.css">
@@ -35,12 +37,56 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"
         referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
     <script>
 
         const issuesUrl = "https://api.github.com/repos/Alan-FGR/aelum/issues?per_page=100&creator=Alan-FGR";
 
         var debugPanel;
         var mainPanel;
+        var articleTemplate;
+
+        function formatIsoDateTime(isoDateTime) {
+            new Date(isoDateTime).toLocaleDateString(undefined,
+                { year: 'numeric', month: 'long', day: 'numeric' })
+        }
+
+        function markdownToHtml(markdown) {
+            var converter = new showdown.Converter({
+                tables: true,
+                strikethrough: true,
+                noHeaderId: true,
+                simplifiedAutoLink: true,
+                excludeTrailingPunctuationFromURLs: true,
+                tablesHeaderId: true,
+                ghCodeBlocks: true,
+                tasklists: true,
+                ghMentions: true,
+                parseImgDimensions: true
+            });
+            return (converter.makeHtml(markdown));
+        }
+
+        function appendArticleToPage(htmlContent) {
+            $("#noJavaScriptNotice").hide(100);
+            var newElement = articleTemplate.clone().appendTo($("#contentWrapper"));
+            newElement.find(".articleContent").html(htmlContent);
+            newElement.show(250);
+            newElement.find(".expandCollapseButton").click(
+                function () {
+                    var childContentHeight = newElement.find(".articleContent").outerHeight();
+                    newElement.find(".articleContent").stop(true).animate({ marginTop: 0 }, 1000);
+                    newElement.find(".articleClipper").animate({ height: childContentHeight }, { queue: false, duration: 1000 });
+                }
+            )
+            function loopScroll() {
+                newElement.find(".articleContent")
+                    .animate({ marginTop: newElement.find(".articleClipper").height()-newElement.find(".articleContent").outerHeight() }, 5000)
+                    .animate({ marginTop: 0 }, 2000, loopScroll);
+            }
+            loopScroll();
+        }
 
         function displayIssuesList(issuesList) {
             issuesList.forEach(element => {
@@ -55,18 +101,39 @@
         $(document).ready(
             function () {
 
+                articleTemplate = $("#articleTemplate");
                 mainPanel = $("#mainPanel");
                 debugPanel = $("#debugPanel");
 
-                const request = fetch(issuesUrl);
+                const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
+                markdownRequest
+                    .then(responseMarkdown => responseMarkdown.text())
+                    .then(markdown => { appendArticleToPage(markdownToHtml(markdown)) })
+                    .catch(
+                        error => debugPanel.text(error)
+                    );
 
-                request
-                    .then(responseJson => responseJson.json()) // tries to fully read json from response
-                    .then(jsonData => {
-                        debugPanel.text(JSON.stringify(jsonData, null, "  "));
-                        displayIssuesList(jsonData);
-                    })
-                    .catch(error => debugPanel.text(error))
+                return;
+                setTimeout(function () {
+                    for (let i = 0; i < 10; i++) {
+
+                        setTimeout(function () {
+                            appendArticleToPage(i);
+                        }, i * 1000);
+                    }
+
+                }, 2000);
+
+
+                // const request = fetch(issuesUrl);
+
+                // request
+                //     .then(responseJson => responseJson.json()) // tries to fully read json from response
+                //     .then(jsonData => {
+                //         debugPanel.text(JSON.stringify(jsonData, null, "  "));
+                //         displayIssuesList(jsonData);
+                //     })
+                //     .catch(error => debugPanel.text(error))
             }
         )
 
@@ -77,14 +144,47 @@
 
     <header>
         <div class="headerContent">
-            <h1>Alan's Website</h1>
+            <img class="headerLogo" src="logo.png">
+            <h1 class="headerText">Alan's Website</h1>
+            <nav class="headerNav">
+                <a href="#blog">BLOG</a>
+                <a href="#projects">PROJECTS</a>
+                <a href="#about">ABOUT</a>
+                <a href="#contact">CONTACT</a>
+            </nav>
         </div>
     </header>
 
-    <div class="contentWrapper">
-        <pre id="mainPanel" style="height: 9000px;">Loading JavaScript...</pre>
-        <pre id="debugPanel">Loading JavaScript...</pre>
+    <div id="contentWrapper">
+
+        <article id="articleTemplate" style="d1isplay: none;">
+            <section class="articleSection">
+                <div class="articleHeader">
+                    <h2 class="articleTitle">Article Title</h2>
+                    <div class="articleHeaderBottomLine">
+                        <span class="articleAuthor">Article Author</span>
+                        <span class="articleDateTime">December 25, 1995b</span>
+                    </div>
+                </div>
+                <div class="articleClipper" style="height: 16em;">
+                    <div class="articleContent">
+                        This is the article contents!!!
+                    </div>
+                </div>
+            </section>
+            <input class="expandCollapseButton" type="button" value="READ MORE" />
+        </article>
+
     </div>
+
+    <!-- Loading spinner always on bottom unless there's nothing to load -->
+    <div id="articleLoader">
+        <div id="articleLoadingSpinner" class="spinner"></div>
+        <span id="noJavaScriptNotice">JavaScript Required!<br />(and a modern browser)</span>
+    </div>
+
+    <pre id="mainPanel">Loading JavaScript...</pre>
+    <pre id="debugPanel">Loading JavaScript...</pre>
 
     <footer>
 
