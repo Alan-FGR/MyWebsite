@@ -1,0 +1,96 @@
+<!-- Hand coded by Alan (https://github.com/Alan-FGR) -->
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Basic Standard Metadata -->
+    <title>Alan's Website</title>
+    <meta name="description" property="og:description" content="Coding, hacking, ">
+    <meta name="author" content="Alan-FGR">
+
+    <!-- Social Media Rich Indexing -->
+    <meta property="og:title" content="Alan's Website">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="">
+    <meta property="og:image" content="image.png">
+
+    <!-- Webpage Icons -->
+    <!-- <link rel="icon" href="/favicon.ico">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png"> -->
+
+    <!-- Styles -->
+    <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Sofia&effect=neon|outline|emboss|shadow-multiple">
+
+    <!-- CSS3 Animations -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <script>
+
+        const issuesUrl = "https://api.github.com/repos/Alan-FGR/aelum/issues?per_page=100&creator=Alan-FGR";
+
+        var debugPanel;
+        var mainPanel;
+
+        function displayIssuesList(issuesList) {
+            issuesList.forEach(element => {
+                mainPanel.append(
+                    '<div class="issueContainer">' +
+                    '<h2>' + element.title + '</h2>' +
+                    '</div>'
+                );
+            });
+        }
+
+        $(document).ready(
+            function () {
+
+                mainPanel = $("#mainPanel");
+                debugPanel = $("#debugPanel");
+
+                const request = fetch(issuesUrl);
+
+                request
+                    .then(responseJson => responseJson.json()) // tries to fully read json from response
+                    .then(jsonData => {
+                        debugPanel.text(JSON.stringify(jsonData, null, "  "));
+                        displayIssuesList(jsonData);
+                    })
+                    .catch(error => debugPanel.text(error))
+            }
+        )
+
+    </script>
+</head>
+
+<body>
+
+    <header>
+        <div class="headerContent">
+            <h1>Alan's Website</h1>
+        </div>
+    </header>
+
+    <div class="contentWrapper">
+        <pre id="mainPanel" style="height: 9000px;">Loading JavaScript...</pre>
+        <pre id="debugPanel">Loading JavaScript...</pre>
+    </div>
+
+    <footer>
+
+    </footer>
+
+    <!-- <script src="js/scripts.js"></script> -->
+</body>
+
+</html>
