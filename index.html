@@ -82,7 +82,7 @@
             )
             function loopScroll() {
                 newElement.find(".articleContent")
-                    .animate({ marginTop: newElement.find(".articleClipper").height()-newElement.find(".articleContent").outerHeight() }, 5000)
+                    .animate({ marginTop: newElement.find(".articleClipper").height() - newElement.find(".articleContent").outerHeight() }, 5000)
                     .animate({ marginTop: 0 }, 2000, loopScroll);
             }
             loopScroll();
@@ -157,7 +157,7 @@
 
     <div id="contentWrapper">
 
-        <article id="articleTemplate" style="d1isplay: none;">
+        <article id="articleTemplate" style="display: none;">
             <section class="articleSection">
                 <div class="articleHeader">
                     <h2 class="articleTitle">Article Title</h2>
@@ -171,8 +171,12 @@
                         This is the article contents!!!
                     </div>
                 </div>
+                <div class="articleExpander">
+                    <a class="expandCollapseButton">
+                        <div class="arrow"></div>
+                    </a>
+                </div>
             </section>
-            <input class="expandCollapseButton" type="button" value="READ MORE" />
         </article>
 
     </div>

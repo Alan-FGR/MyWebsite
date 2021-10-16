@@ -11,6 +11,10 @@ img {
     max-width: 100%;
 }
 
+pre {
+    overflow: scroll;
+}
+
 .spinner {
     display: inline-block;
     width: 8em;
@@ -44,10 +48,7 @@ a while (so no notice is shown when the browser
 support JS and CSS3, since this element is hidden
 from JS before the CSS3 animation shows it)*/
 @keyframes fadeInAfterHalf {
-  0% {
-    opacity: 0;
-  }
-  90% {
+  0%, 90% {
     opacity: 0;
   }
   100% {
@@ -221,6 +222,80 @@ article {
 .articleContent {
     padding: 2em;
 }
+
+
+.articleExpander {
+    display: flex;
+    flex-direction: column;
+}
+
+.articleExpander:before {
+    /*! display: inline; */
+    content: " ";
+    background: linear-gradient(rgba(0,0,0,0), #fff);
+    margin-top: -3em;
+    height: 3em
+}
+
+.articleExpander > input {
+    margin: auto 0;
+}
+
+
+/* Bouncing Arrow */
+
+.expandCollapseButton {
+    /*! opacity: 0; */
+    
+        /*! left: 50%; */
+        /*! top: 50%; */
+    /*! transform-origin: 50% 50%; */
+    width: 100%;
+    height: 4em;
+    margin: -2em auto;
+    /*! border: 1px solid; */
+    cursor: pointer;
+}
+
+.arrow {
+    /*! opacity: 0; */
+    position: absolute;
+        left: 50%;
+        /*! top: 50%; */
+    /*! transform-origin: 50% 50%; */
+    width: 2em;
+    height: 2em;
+    margin: -1em;
+    /*! margin: auto; */
+    
+      border: solid black;
+  border-width: 0 0.2em 0.2em 0;
+  /*! display: inline-block; */
+  /*! padding: 1em 1em; */
+    animation: arrowDownBounce 1s ease infinite;
+    
+}
+
+@keyframes arrowDownBounce {
+    0%, 20% {
+        opacity: 0;
+        transform: translateY(-300%) rotate(45deg);
+    }
+    80% {
+        opacity: 1;
+        transform: translateY(100%) rotate(45deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(60%) rotate(45deg);
+    }
+}
+
+
+
+
+
+
 
 
 .username:after {
