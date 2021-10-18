@@ -16,9 +16,10 @@ pre {
 }
 
 .spinner {
-    display: inline-block;
+    /*! display: inline-block; */
     width: 8em;
     height: 8em;
+    margin: 0 auto;
 }
 
 .spinner:after {
@@ -32,6 +33,17 @@ pre {
     animation: spin .2s linear infinite;
 }
 
+.commentsLoadingSpinner {
+    width: 3em;
+    height: 3em;
+}
+
+
+.commentsLoadingSpinner:after {
+    width: 2em;
+    height: 2em;
+    margin: 0.5em;
+}
 
 #articleLoader {
     display: flex;
@@ -39,7 +51,7 @@ pre {
 }
 
 #articleLoader > * {
-    margin: 0 auto;
+    
 }
 
 /* If the browser is modern and has JS disabled,
@@ -101,11 +113,18 @@ header {
     text-transform: uppercase;
     display: flex;
     max-width: 1024px;
+    /*! flex-wrap: wrap; */
 }
 
 .headerLogo {
     height: 3em;
     width: auto;
+}
+
+@media screen and (max-width: 1088px) {
+    .headerLogo {
+        margin-left: 2em;
+    }
 }
 
 .headerText {
@@ -121,10 +140,10 @@ header {
 }
 
 .headerNav {
-    
     display: flex;
     margin-left: auto;
 }
+
 
 a {
     color: #000;
@@ -195,11 +214,20 @@ article {
         0 0.05em 0.0em #eee,
         0 0.1em 0.1em #000,
         0 0.1em 0.2em #000;
+    flex-wrap: wrap;
 }
 
+.articleHeaderTopLine{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.articleHeaderTopLine > * {
+    margin-top: 0;
+}
 
 .articleTitle {
-    margin: 0 0 0.5em 0;
+    flex: 1;
 /*     color: #fff;
         text-shadow: 
         0 0.05em 0 #ccc,
@@ -210,7 +238,7 @@ article {
 }
 
 .articleAuthor{
-    flex-grow: 1;
+    flex: 1;
     text-transform: uppercase;
 }
 
@@ -239,6 +267,43 @@ article {
 
 .articleExpander > input {
     margin: auto 0;
+}
+
+
+.commentsWrapper {
+  padding: 1em;
+}
+
+.commentsWrapper > div {
+  box-shadow: inset 0 0.2em 0.6em rgba(0,0,0,0.5);
+  padding: 1em;
+    margin-bottom: 2em;
+}
+
+.commentsWrapper > div:last-child {
+  margin-bottom: 0;
+}
+
+.commentHeader {
+  box-shadow: 0 0 0.6em rgba(0,0,0,0.5);
+  padding: 1em;
+  margin-bottom: 1em;
+  display: flex;
+    flex-wrap: wrap;
+}
+
+.commenterName {
+  flex: 1;
+  font-weight: bold;
+}
+
+.commentBody {
+  padding-left: 1em;
+    
+}
+
+.headerNav {
+    border: none;
 }
 
 
@@ -273,7 +338,25 @@ article {
   /*! display: inline-block; */
   /*! padding: 1em 1em; */
     animation: arrowDownBounce 1s ease infinite;
-    
+}
+
+.arrowUp {
+    animation: arrowUpBounce 1s ease infinite !important;
+}
+
+@keyframes arrowUpBounce {
+    0%, 20% {
+        opacity: 0;
+        transform: translateY(200%) rotate(-135deg);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(100%) rotate(-135deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(0%) rotate(-135deg);
+    }
 }
 
 @keyframes arrowDownBounce {
@@ -292,6 +375,45 @@ article {
 }
 
 
+
+
+
+
+
+@media screen and (max-width: 768px) {
+    .headerText {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .headerNav {
+        font-size: 0.8em;
+    }
+    .headerLogo {
+        height: 2em;
+    }
+    .headerContent {
+        flex-wrap: wrap;
+    }
+    
+    .commentsWrapper {
+        padding: 1em 0;
+    }
+
+    .commentsWrapper > div {
+        padding: 0.5em;
+    }
+
+    .commentHeader {
+        padding: 0.5em;
+        margin-bottom: 0.5em;
+    }
+
+    .commentBody {
+        padding-left: 0;
+    }
+}
 
 
 

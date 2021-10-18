@@ -46,6 +46,8 @@
         var debugPanel;
         var mainPanel;
         var articleTemplate;
+        var expandedArticle = undefined;
+        var collapsedArticleClipperHeight = undefined;
 
         function formatIsoDateTime(isoDateTime) {
             new Date(isoDateTime).toLocaleDateString(undefined,
@@ -68,72 +70,135 @@
             return (converter.makeHtml(markdown));
         }
 
-        function appendArticleToPage(htmlContent) {
-            $("#noJavaScriptNotice").hide(100);
-            var newElement = articleTemplate.clone().appendTo($("#contentWrapper"));
-            newElement.find(".articleContent").html(htmlContent);
-            newElement.show(250);
-            newElement.find(".expandCollapseButton").click(
-                function () {
-                    var childContentHeight = newElement.find(".articleContent").outerHeight();
-                    newElement.find(".articleContent").stop(true).animate({ marginTop: 0 }, 1000);
-                    newElement.find(".articleClipper").animate({ height: childContentHeight }, { queue: false, duration: 1000 });
-                }
-            )
+        function collapseArticle(articleElement, scrollToTop) {
+            if (articleElement === undefined) return;
+            articleElement.find(".articleClipper").stop(true)
+                .animate({ height: collapsedArticleClipperHeight }, { queue: false, duration: 500 });
+            startAutoScroll(articleElement);
+            articleElement.find(".arrow").removeClass("arrowUp");
+            expandedArticle = undefined;
+            if (scrollToTop) {
+                $([document.documentElement, document.body]).animate(
+                    { scrollTop: articleElement.offset().top - 160 },
+                    { queue: false, duration: 400 });
+            }
+        }
+
+        function expandArticle(articleElement) {
+            var content = articleElement.find(".articleContent");
+            content.stop(true).animate({ marginTop: 0 }, 1000);
+            articleElement.find(".articleClipper")
+                .animate({ height: content.outerHeight() }, { queue: false, duration: 500 });
+            // todo collapse previous
+            articleElement.find(".arrow").addClass("arrowUp");
+            expandedArticle = articleElement;
+        }
+
+        function toggleArticle(articleElement) {
+            if (expandedArticle === articleElement) { // collapsing clicked
+                collapseArticle(articleElement, true);
+                return;
+            }
+            if (expandedArticle !== undefined) // collapsing other
+                collapseArticle(expandedArticle, false)
+            expandArticle(articleElement)
+        }
+
+        function startAutoScroll(articleElement) {
             function loopScroll() {
-                newElement.find(".articleContent")
-                    .animate({ marginTop: newElement.find(".articleClipper").height() - newElement.find(".articleContent").outerHeight() }, 5000)
+                var content = articleElement.find(".articleContent");
+                content
+                    .animate({ marginTop: articleElement.find(".articleClipper").height() - content.outerHeight() }, 5000)
                     .animate({ marginTop: 0 }, 2000, loopScroll);
             }
             loopScroll();
         }
 
+        function appendArticleToPage(bodyMarkdown) {
+            $("#noJavaScriptNotice").hide(100);
+            var newArticleElement = articleTemplate.clone().appendTo($("#contentWrapper"));
+            newArticleElement.find(".articleBodyContent").html(markdownToHtml(bodyMarkdown));
+            newArticleElement.show(250);
+            newArticleElement.find(".expandCollapseButton").click(() => toggleArticle(newArticleElement));
+            newArticleElement.find(".articleTitle").click(() => toggleArticle(newArticleElement));
+            newArticleElement.articleData = bodyMarkdown; // todo add comment and stuff
+            console.log(newArticleElement.articleData);
+            startAutoScroll(newArticleElement);
+        }
+
         function displayIssuesList(issuesList) {
             issuesList.forEach(element => {
-                mainPanel.append(
-                    '<div class="issueContainer">' +
-                    '<h2>' + element.title + '</h2>' +
-                    '</div>'
-                );
+                appendArticleToPage(element.body)
             });
         }
+
+        function isElementWithinScrollArea() {
+            var window = $(window);
+            var viewport = {
+                top: window.scrollTop(),
+                left: window.scrollLeft()
+            };
+            viewport.right = viewport.left + window.width();
+            viewport.bottom = viewport.top + window.height();
+
+            var bounds = this.offset();
+            bounds.right = bounds.left + this.outerWidth();
+            bounds.bottom = bounds.top + this.outerHeight();
+
+            return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
+        };
 
         $(document).ready(
             function () {
 
-                articleTemplate = $("#articleTemplate");
+                articleTemplate = $(".articleTemplate");
                 mainPanel = $("#mainPanel");
                 debugPanel = $("#debugPanel");
 
-                const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
-                markdownRequest
-                    .then(responseMarkdown => responseMarkdown.text())
-                    .then(markdown => { appendArticleToPage(markdownToHtml(markdown)) })
-                    .catch(
-                        error => debugPanel.text(error)
-                    );
+                collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
 
-                return;
-                setTimeout(function () {
-                    for (let i = 0; i < 10; i++) {
-
-                        setTimeout(function () {
-                            appendArticleToPage(i);
-                        }, i * 1000);
+                $(window).resize(function () {
+                    if (expandedArticle !== undefined) {
+                        expandArticle(expandedArticle); // we refresh the sizing of the element
                     }
+                });
 
-                }, 2000);
+                $(window).scroll(function () {
+                    if (expandedArticle === undefined) return;
+                    if (expandedArticle.loadedComments === undefined) {
+
+                    }
+                });
+
+                // const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
+                // markdownRequest
+                //     .then(responseMarkdown => responseMarkdown.text())
+                //     .then(markdown => { appendArticleToPage(markdown) })
+                //     .catch(
+                //         error => debugPanel.text(error)
+                //     );
+
+                // return;
+                // setTimeout(function () {
+                //     for (let i = 0; i < 10; i++) {
+
+                //         setTimeout(function () {
+                //             appendArticleToPage(i);
+                //         }, i * 1000);
+                //     }
+
+                // }, 2000);
 
 
-                // const request = fetch(issuesUrl);
+                const request = fetch(issuesUrl);
 
-                // request
-                //     .then(responseJson => responseJson.json()) // tries to fully read json from response
-                //     .then(jsonData => {
-                //         debugPanel.text(JSON.stringify(jsonData, null, "  "));
-                //         displayIssuesList(jsonData);
-                //     })
-                //     .catch(error => debugPanel.text(error))
+                request
+                    .then(responseJson => responseJson.json()) // tries to fully read json from response
+                    .then(jsonData => {
+                        debugPanel.text(JSON.stringify(jsonData, null, "  "));
+                        displayIssuesList(jsonData);
+                    })
+                    .catch(error => debugPanel.text(error))
             }
         )
 
@@ -156,11 +221,14 @@
     </header>
 
     <div id="contentWrapper">
-
-        <article id="articleTemplate" style="display: none;">
+        <!-- This is the article template object we use to populate with actual data -->
+        <article class="articleTemplate" style="display: none;">
             <section class="articleSection">
                 <div class="articleHeader">
-                    <h2 class="articleTitle">Article Title</h2>
+                    <div class="articleHeaderTopLine">
+                        <h2 class="articleTitle">Article Title</h2>
+                        <h3 class="articleCommentCount">Comment Count</h3>
+                    </div>
                     <div class="articleHeaderBottomLine">
                         <span class="articleAuthor">Article Author</span>
                         <span class="articleDateTime">December 25, 1995b</span>
@@ -168,7 +236,21 @@
                 </div>
                 <div class="articleClipper" style="height: 16em;">
                     <div class="articleContent">
-                        This is the article contents!!!
+                        <div class="articleBodyContent"></div>
+                        <div class="articleComments">
+                            <div class="commentsWrapper">
+                                <div class="commentTemplate">
+                                    <div class="commentHeader">
+                                        <div class="commenterName">Commenter Name</div>
+                                        <div class="commentDateTime">Dec 29, 1995</div>
+                                    </div>
+                                    <div class="commentBody">
+                                        Comment Body
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="spinner commentsLoadingSpinner" style="display: none;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="articleExpander">
@@ -178,6 +260,7 @@
                 </div>
             </section>
         </article>
+        <!-- End of article template object -->
 
     </div>
 
