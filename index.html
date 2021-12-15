@@ -41,17 +41,33 @@
         referrerpolicy="no-referrer"></script>
     <script>
 
-        const issuesUrl = "https://api.github.com/repos/Alan-FGR/aelum/issues?per_page=100&creator=Alan-FGR";
+        const userName = "Alan-FGR";
+        const repoName = "aelum";
+
+        const repoApiUrl = "https://api.github.com/repos/" + userName + "/" + repoName;
+        const getIssuesUrl = repoApiUrl + "/issues?per_page=100&creator=" + userName;
+
+        const repoLinkUrl = "https://github.com/" + userName + "/" + repoName;
+        
+        function formatIssueCommentsUrl(issueNumber) {
+            return repoApiUrl + "/issues/" + issueNumber + "/comments";
+        }
+
+        function formatIssueLink(issueNumber) {
+            return repoLinkUrl + "/issues/" + issueNumber + "#issue-comment-box";
+        }
+
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
         var debugPanel;
-        var mainPanel;
         var articleTemplate;
+        var commentTemplate;
         var expandedArticle = undefined;
         var collapsedArticleClipperHeight = undefined;
 
         function formatIsoDateTime(isoDateTime) {
             new Date(isoDateTime).toLocaleDateString(undefined,
-                { year: 'numeric', month: 'long', day: 'numeric' })
+                { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
         function markdownToHtml(markdown) {
@@ -70,89 +86,204 @@
             return (converter.makeHtml(markdown));
         }
 
-        function collapseArticle(articleElement, scrollToTop) {
-            if (articleElement === undefined) return;
-            articleElement.find(".articleClipper").stop(true)
+        function collapseArticle(articleObject, scrollToTop) {
+            if (articleObject === undefined) return;
+            articleObject.find(".articleClipper").stop(true)
                 .animate({ height: collapsedArticleClipperHeight }, { queue: false, duration: 500 });
-            startAutoScroll(articleElement);
-            articleElement.find(".arrow").removeClass("arrowUp");
+            startAutoScroll(articleObject);
+            articleObject.find(".arrow").removeClass("arrowUp");
             expandedArticle = undefined;
             if (scrollToTop) {
                 $([document.documentElement, document.body]).animate(
-                    { scrollTop: articleElement.offset().top - 160 },
+                    { scrollTop: articleObject.offset().top - 160 },
                     { queue: false, duration: 400 });
             }
         }
 
-        function expandArticle(articleElement) {
-            var content = articleElement.find(".articleContent");
+        function expandArticle(articleObject) {
+            var content = articleObject.find(".articleContent");
             content.stop(true).animate({ marginTop: 0 }, 1000);
-            articleElement.find(".articleClipper")
+            articleObject.find(".articleClipper")
                 .animate({ height: content.outerHeight() }, { queue: false, duration: 500 });
             // todo collapse previous
-            articleElement.find(".arrow").addClass("arrowUp");
-            expandedArticle = articleElement;
+            articleObject.find(".arrow").addClass("arrowUp");
+            expandedArticle = articleObject;
+
+            loadArticleComments(articleObject);
         }
 
-        function toggleArticle(articleElement) {
-            if (expandedArticle === articleElement) { // collapsing clicked
-                collapseArticle(articleElement, true);
+        function toggleArticle(articleObject) {
+            if (expandedArticle === articleObject) { // collapsing clicked
+                collapseArticle(articleObject, true);
                 return;
             }
             if (expandedArticle !== undefined) // collapsing other
-                collapseArticle(expandedArticle, false)
-            expandArticle(articleElement)
+                collapseArticle(expandedArticle, false);
+            expandArticle(articleObject);
         }
-
-        function startAutoScroll(articleElement) {
+        
+        function startAutoScroll(articleObject) {
             function loopScroll() {
-                var content = articleElement.find(".articleContent");
+                var content = articleObject.find(".articleContent");
+                var clipperHeight = articleObject.find(".articleClipper").height();
+                var totalHeight = clipperHeight - content.outerHeight(true);
+                console.log(content.outerHeight());
+                console.log(content.outerHeight());
+                console.log(content.outerHeight());
+                console.log(content.outerHeight());
+                console.log(content.outerHeight());
+                console.log(content.outerHeight());
                 content
-                    .animate({ marginTop: articleElement.find(".articleClipper").height() - content.outerHeight() }, 5000)
+                    .animate({ marginTop: totalHeight }, 5000)
                     .animate({ marginTop: 0 }, 2000, loopScroll);
             }
             loopScroll();
         }
 
-        function appendArticleToPage(bodyMarkdown) {
-            $("#noJavaScriptNotice").hide(100);
-            var newArticleElement = articleTemplate.clone().appendTo($("#contentWrapper"));
-            newArticleElement.find(".articleBodyContent").html(markdownToHtml(bodyMarkdown));
-            newArticleElement.show(250);
-            newArticleElement.find(".expandCollapseButton").click(() => toggleArticle(newArticleElement));
-            newArticleElement.find(".articleTitle").click(() => toggleArticle(newArticleElement));
-            newArticleElement.articleData = bodyMarkdown; // todo add comment and stuff
-            console.log(newArticleElement.articleData);
-            startAutoScroll(newArticleElement);
+        function formatDate(dateUtcString, includeTime, shortMonthName) {
+            var date = new Date(dateUtcString);
+            var day = date.getDay();
+            var monthName = monthNames[date.getMonth()];
+            var year = date.getFullYear();
+            var hour = date.getHours();
+            var minute = date.getMinutes();
+
+            if (shortMonthName) monthName = monthName.substr(0, 3);
+
+            var dateString = monthName + " " + day + ", " + year;
+
+            if (!includeTime) return dateString;
+
+            return dateString + " at " + hour + ":" + minute;
         }
 
-        function displayIssuesList(issuesList) {
-            issuesList.forEach(element => {
-                appendArticleToPage(element.body)
+        function appendCommentObject(parentObject, githubComment, noHeader) {
+            var newCommentObject = commentTemplate.clone().appendTo(parentObject);
+            newCommentObject.find(".commentBody").html(markdownToHtml(githubComment.body));
+            newCommentObject.show();
+            if (noHeader) {
+                newCommentObject.find(".commentHeader").hide();
+                return;
+            }
+            newCommentObject.find(".commenterName").text(githubComment.user.login);
+            newCommentObject.find(".commentDateTime").text(formatDate(githubComment.created_at, true, true));
+        }
+
+        function loadArticleComments(articleObject) {
+
+            if (articleObject.commentsLoaded)
+                return;
+
+            articleObject.commentsLoaded = true;
+
+            var commentsWrapper = articleObject.find(".commentsWrapper");
+
+            var commentsUrl = formatIssueCommentsUrl(articleObject.githubIssue.number);
+
+            window.fetch(commentsUrl)
+                .then(responseJson => responseJson.json())
+                .then(githubCommentsList => {
+                    githubCommentsList.forEach(githubComment => {
+                        appendCommentObject(commentsWrapper, githubComment, false);
+                    });
+                    expandArticle(articleObject);
+                })
+                .catch(error => commentsWrapper.text(error)); // TODO append
+        }
+
+        function formatCountable(number, singularWord) {
+            if (number == 0)
+                return "No " + singularWord;
+            if (number == 1)
+                return "1 " + singularWord;
+            return number + " " + singularWord + "s";
+        }
+
+        function appendArticleToPage(githubIssue) {
+
+            var issueLink = formatIssueLink(githubIssue.number);
+            var commentsString = formatCountable(githubIssue.comments, "comment");
+
+            var newArticleObject = articleTemplate.clone().appendTo($("#contentWrapper"));
+            // newArticleObject.find(".articleTitle").text(githubIssue.title);
+            // newArticleObject.find(".articleBodyContent").html(markdownToHtml(githubIssue.body));
+            // newArticleObject.find(".articleCommentCount").html('<a href="' + issueLink + '" target="_blank">' + commentsString + '</a>');
+            // newArticleObject.find(".articleAuthor").text(githubIssue.user.login);
+            // newArticleObject.find(".articleDateTime").text(formatDate(githubIssue.created_at, false, false));
+
+            newArticleObject.find(".articleBodyContent").html(markdownToHtml(
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"+
+                "asdfsdfasdf\n"
+            ));
+
+            newArticleObject.show(250);
+            // newArticleObject.find(".expandCollapseButton").click(() => toggleArticle(newArticleObject));
+            // newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
+            // newArticleObject.githubIssue = githubIssue;
+            // newArticleObject.commentsLoaded = false;
+
+            // var noticeMarkdown = commentsString + " so far. Add your opinion [on GitHub!](" + issueLink + ")";
+
+            // if (githubIssue.comments == 0) {
+            //     newArticleObject.commentsLoaded = true;
+            //     noticeMarkdown = "No comments yet. [Start the discussion on GitHub!](" + issueLink + ")";
+            // }
+            
+            // appendCommentObject(newArticleObject.find(".commentsWrapper"), { body: noticeMarkdown }, true);
+
+            // $("#noJavaScriptNotice").hide(100);
+
+            startAutoScroll(newArticleObject);
+        }
+
+        function appendIssuesListToPage(githubIssuesList) {
+            githubIssuesList.forEach(githubIssue => {
+                appendArticleToPage(githubIssue);
             });
         }
-
-        function isElementWithinScrollArea() {
-            var window = $(window);
-            var viewport = {
-                top: window.scrollTop(),
-                left: window.scrollLeft()
-            };
-            viewport.right = viewport.left + window.width();
-            viewport.bottom = viewport.top + window.height();
-
-            var bounds = this.offset();
-            bounds.right = bounds.left + this.outerWidth();
-            bounds.bottom = bounds.top + this.outerHeight();
-
-            return (!(viewport.right < bounds.left || viewport.left > bounds.right || viewport.bottom < bounds.top || viewport.top > bounds.bottom));
-        };
 
         $(document).ready(
             function () {
 
                 articleTemplate = $(".articleTemplate");
-                mainPanel = $("#mainPanel");
+                commentTemplate = articleTemplate.find(".commentTemplate");
                 debugPanel = $("#debugPanel");
 
                 collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
@@ -190,17 +321,19 @@
                 // }, 2000);
 
 
-                const request = fetch(issuesUrl);
+                const request = window.fetch(getIssuesUrl);
 
                 request
                     .then(responseJson => responseJson.json()) // tries to fully read json from response
                     .then(jsonData => {
                         debugPanel.text(JSON.stringify(jsonData, null, "  "));
-                        displayIssuesList(jsonData);
+
+                        appendIssuesListToPage(jsonData);
+                        $("#articleLoader").hide(100);
                     })
-                    .catch(error => debugPanel.text(error))
+                    .catch(error => debugPanel.text(error));
             }
-        )
+        );
 
     </script>
 </head>
@@ -239,7 +372,7 @@
                         <div class="articleBodyContent"></div>
                         <div class="articleComments">
                             <div class="commentsWrapper">
-                                <div class="commentTemplate">
+                                <div class="commentTemplate" style="display: none;">
                                     <div class="commentHeader">
                                         <div class="commenterName">Commenter Name</div>
                                         <div class="commentDateTime">Dec 29, 1995</div>
@@ -249,6 +382,7 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- TODO -->
                             <div class="spinner commentsLoadingSpinner" style="display: none;"></div>
                         </div>
                     </div>
@@ -266,12 +400,12 @@
 
     <!-- Loading spinner always on bottom unless there's nothing to load -->
     <div id="articleLoader">
-        <div id="articleLoadingSpinner" class="spinner"></div>
+        <!-- TODO -->
+        <div id="articleLoadingSpinner" class="spinner" style="display: none;"></div>
         <span id="noJavaScriptNotice">JavaScript Required!<br />(and a modern browser)</span>
     </div>
 
-    <pre id="mainPanel">Loading JavaScript...</pre>
-    <pre id="debugPanel">Loading JavaScript...</pre>
+    <pre id="debugPanel" style="display: none;">Loading JavaScript...</pre>
 
     <footer>
 
