@@ -205,70 +205,25 @@
             var commentsString = formatCountable(githubIssue.comments, "comment");
 
             var newArticleObject = articleTemplate.clone().appendTo($("#contentWrapper"));
-            // newArticleObject.find(".articleTitle").text(githubIssue.title);
-            // newArticleObject.find(".articleBodyContent").html(markdownToHtml(githubIssue.body));
-            // newArticleObject.find(".articleCommentCount").html('<a href="' + issueLink + '" target="_blank">' + commentsString + '</a>');
-            // newArticleObject.find(".articleAuthor").text(githubIssue.user.login);
-            // newArticleObject.find(".articleDateTime").text(formatDate(githubIssue.created_at, false, false));
-
-            newArticleObject.find(".articleBodyContent").html(markdownToHtml(
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"+
-                "asdfsdfasdf\n"
-            ));
-
+            newArticleObject.find(".articleTitle").text(githubIssue.title);
+            newArticleObject.find(".articleBodyContent").html(markdownToHtml(githubIssue.body));
+            newArticleObject.find(".articleCommentCount").html('<a href="' + issueLink + '" target="_blank">' + commentsString + '</a>');
+            newArticleObject.find(".articleAuthor").text(githubIssue.user.login);
+            newArticleObject.find(".articleDateTime").text(formatDate(githubIssue.created_at, false, false));
             newArticleObject.show(250);
-            // newArticleObject.find(".expandCollapseButton").click(() => toggleArticle(newArticleObject));
-            // newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
-            // newArticleObject.githubIssue = githubIssue;
-            // newArticleObject.commentsLoaded = false;
+            newArticleObject.find(".expandCollapseButton").click(() => toggleArticle(newArticleObject));
+            newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
+            newArticleObject.githubIssue = githubIssue;
+            newArticleObject.commentsLoaded = false;
 
-            // var noticeMarkdown = commentsString + " so far. Add your opinion [on GitHub!](" + issueLink + ")";
+            var noticeMarkdown = commentsString + " so far. Add your opinion [on GitHub!](" + issueLink + ")";
 
-            // if (githubIssue.comments == 0) {
-            //     newArticleObject.commentsLoaded = true;
-            //     noticeMarkdown = "No comments yet. [Start the discussion on GitHub!](" + issueLink + ")";
-            // }
+            if (githubIssue.comments == 0) {
+                newArticleObject.commentsLoaded = true;
+                noticeMarkdown = "No comments yet. [Start the discussion on GitHub!](" + issueLink + ")";
+            }
             
-            // appendCommentObject(newArticleObject.find(".commentsWrapper"), { body: noticeMarkdown }, true);
-
-            // $("#noJavaScriptNotice").hide(100);
+            appendCommentObject(newArticleObject.find(".commentsWrapper"), { body: noticeMarkdown }, true);
 
             startAutoScroll(newArticleObject);
         }
@@ -327,7 +282,7 @@
                     .then(responseJson => responseJson.json()) // tries to fully read json from response
                     .then(jsonData => {
                         debugPanel.text(JSON.stringify(jsonData, null, "  "));
-
+                        $("#noJavaScriptNotice").hide(100);
                         appendIssuesListToPage(jsonData);
                         $("#articleLoader").hide(100);
                     })
