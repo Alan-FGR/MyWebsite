@@ -184,7 +184,7 @@ article {
             0 2.2em 0.8em #000, 
             0 2.1em 0.4em #000, 
             0 2.0em 0.2em #000;
-        margin: 6em auto !important;
+        margin: 10em auto !important;
         animation: articlePop 1s cubic-bezier(0.4, 1.8, 0.5, 1) 0s;
 }
 
@@ -197,7 +197,7 @@ article {
 }
 
 #contentWrapper {
-    margin: 10em auto;
+    margin: 10em auto 25em auto;
     max-width: 1024px;
     /*! margin: auto; */
 }

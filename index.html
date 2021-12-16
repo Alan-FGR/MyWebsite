@@ -1,4 +1,9 @@
 <!-- Hand coded by Alan (https://github.com/Alan-FGR) -->
+<!-- 
+TODO
+- Links to specific articles
+- 
+-->
 <!doctype html>
 <html lang="en">
 
@@ -65,6 +70,9 @@
         var expandedArticle = undefined;
         var collapsedArticleClipperHeight = undefined;
 
+        var loadedArticles = [];
+        var shownIndex = 0;
+
         function formatIsoDateTime(isoDateTime) {
             new Date(isoDateTime).toLocaleDateString(undefined,
                 { year: 'numeric', month: 'long', day: 'numeric' });
@@ -127,12 +135,6 @@
                 var content = articleObject.find(".articleContent");
                 var clipperHeight = articleObject.find(".articleClipper").height();
                 var totalHeight = clipperHeight - content.outerHeight(true);
-                console.log(content.outerHeight());
-                console.log(content.outerHeight());
-                console.log(content.outerHeight());
-                console.log(content.outerHeight());
-                console.log(content.outerHeight());
-                console.log(content.outerHeight());
                 content
                     .animate({ marginTop: totalHeight }, 5000)
                     .animate({ marginTop: 0 }, 2000, loopScroll);
@@ -199,6 +201,11 @@
             return number + " " + singularWord + "s";
         }
 
+        function displayArticle(newArticleObject) {
+            newArticleObject.show(250);
+            startAutoScroll(newArticleObject);
+        }
+
         function appendArticleToPage(githubIssue) {
 
             var issueLink = formatIssueLink(githubIssue.number);
@@ -210,7 +217,6 @@
             newArticleObject.find(".articleCommentCount").html('<a href="' + issueLink + '" target="_blank">' + commentsString + '</a>');
             newArticleObject.find(".articleAuthor").text(githubIssue.user.login);
             newArticleObject.find(".articleDateTime").text(formatDate(githubIssue.created_at, false, false));
-            newArticleObject.show(250);
             newArticleObject.find(".expandCollapseButton").click(() => toggleArticle(newArticleObject));
             newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
             newArticleObject.githubIssue = githubIssue;
@@ -225,7 +231,9 @@
             
             appendCommentObject(newArticleObject.find(".commentsWrapper"), { body: noticeMarkdown }, true);
 
-            startAutoScroll(newArticleObject);
+            loadedArticles.push(newArticleObject);
+
+            //displayArticle(newArticleObject);
         }
 
         function appendIssuesListToPage(githubIssuesList) {
@@ -234,61 +242,81 @@
             });
         }
 
-        $(document).ready(
-            function () {
-
-                articleTemplate = $(".articleTemplate");
-                commentTemplate = articleTemplate.find(".commentTemplate");
-                debugPanel = $("#debugPanel");
-
-                collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
-
-                $(window).resize(function () {
-                    if (expandedArticle !== undefined) {
-                        expandArticle(expandedArticle); // we refresh the sizing of the element
-                    }
-                });
-
-                $(window).scroll(function () {
-                    if (expandedArticle === undefined) return;
-                    if (expandedArticle.loadedComments === undefined) {
-
-                    }
-                });
-
-                // const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
-                // markdownRequest
-                //     .then(responseMarkdown => responseMarkdown.text())
-                //     .then(markdown => { appendArticleToPage(markdown) })
-                //     .catch(
-                //         error => debugPanel.text(error)
-                //     );
-
-                // return;
-                // setTimeout(function () {
-                //     for (let i = 0; i < 10; i++) {
-
-                //         setTimeout(function () {
-                //             appendArticleToPage(i);
-                //         }, i * 1000);
-                //     }
-
-                // }, 2000);
-
-
-                const request = window.fetch(getIssuesUrl);
-
-                request
-                    .then(responseJson => responseJson.json()) // tries to fully read json from response
-                    .then(jsonData => {
-                        debugPanel.text(JSON.stringify(jsonData, null, "  "));
-                        $("#noJavaScriptNotice").hide(100);
-                        appendIssuesListToPage(jsonData);
-                        $("#articleLoader").hide(100);
-                    })
-                    .catch(error => debugPanel.text(error));
+        function showNextArticle() {
+            if (shownIndex < loadedArticles.length) {
+                displayArticle(loadedArticles[shownIndex]);
+                shownIndex++;
             }
-        );
+        }
+
+        function isAtBottom() {
+            var windowObject = $(window);
+            var currentViewBottom = windowObject.scrollTop() + windowObject.height();
+            return currentViewBottom >= $(document).height();
+        }
+
+        function showMoreArticlesInView() {
+            if (isAtBottom())
+                showNextArticle();
+        }
+
+        $(document).ready(function () {
+
+            articleTemplate = $(".articleTemplate");
+            commentTemplate = articleTemplate.find(".commentTemplate");
+            debugPanel = $("#debugPanel");
+
+            collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
+
+            $(window).resize(function () {
+                if (expandedArticle !== undefined) {
+                    expandArticle(expandedArticle); // we refresh the sizing of the element
+                }
+                showMoreArticlesInView();
+            });
+
+            $(window).scroll(function () {
+                showMoreArticlesInView();
+            });
+
+            // const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
+            // markdownRequest
+            //     .then(responseMarkdown => responseMarkdown.text())
+            //     .then(markdown => { appendArticleToPage(markdown) })
+            //     .catch(
+            //         error => debugPanel.text(error)
+            //     );
+
+            // return;
+            // setTimeout(function () {
+            //     for (let i = 0; i < 10; i++) {
+
+            //         setTimeout(function () {
+            //             appendArticleToPage(i);
+            //         }, i * 1000);
+            //     }
+
+            // }, 2000);
+
+            const request = window.fetch(getIssuesUrl);
+
+            request
+                .then(responseJson => responseJson.json()) // tries to fully read json from response
+                .then(jsonData => {
+                    debugPanel.text(JSON.stringify(jsonData, null, "  "));
+                    $("#noJavaScriptNotice").hide(100);
+                    appendIssuesListToPage(jsonData);
+                    $("#articleLoader").hide(100);
+
+                    for (let index = 0; index < loadedArticles.length; index++) {
+                        setTimeout(function () {
+                            if (isAtBottom())
+                                showNextArticle();
+                        }, index * 500);
+                    }
+                })
+                .catch(error => debugPanel.text(error));
+        });
 
     </script>
 </head>
