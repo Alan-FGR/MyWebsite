@@ -250,16 +250,14 @@ TODO
         }
 
         function isAtBottom() {
-            var windowObject = $(window);
-            var currentViewBottom = windowObject.scrollTop() + windowObject.height();
-            return currentViewBottom >= $(document).height();
+            return (window.innerHeight + window.scrollY) >= document.body.offsetHeight;
         }
 
         function showMoreArticlesInView() {
             if (isAtBottom())
                 showNextArticle();
         }
-
+        
         $(document).ready(function () {
 
             articleTemplate = $(".articleTemplate");
