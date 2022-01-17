@@ -250,9 +250,13 @@ TODO
         }
 
         function isAtBottom() {
-            scrollHeight = $(document).height();
-            scrollPosition = $(window).height() + $(window).scrollTop();
-            return scrollPosition >= scrollHeight - 5;
+            scrollHeight = Math.max(
+                Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
+                Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
+                Math.max(document.body.clientHeight, document.documentElement.clientHeight)
+            );
+            scrollPosition = $(window).innerHeight() + $(window).scrollTop();
+            return scrollPosition >= scrollHeight - 25;
         }
 
         function showMoreArticlesInView() {
