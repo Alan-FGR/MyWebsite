@@ -62,6 +62,10 @@ TODO
             return repoLinkUrl + "/issues/" + issueNumber + "#issue-comment-box";
         }
 
+        function formatAbsoluteLink(relative) {
+            return window.location.hostname + relative;
+        }
+
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
         var debugPanel;
@@ -212,13 +216,15 @@ TODO
             var commentsString = formatCountable(githubIssue.comments, "comment");
 
             var newArticleObject = articleTemplate.clone().appendTo($("#contentWrapper"));
-            newArticleObject.find(".articleTitle").text(githubIssue.title);
+            newArticleObject.find(".articleTitle").html(githubIssue.title + 
+            '<a href='+formatAbsoluteLink("#"+githubIssue.number)+'><img src="permalink.png" title="Permalink" /></a>'
+            );
             newArticleObject.find(".articleBodyContent").html(markdownToHtml(githubIssue.body));
             newArticleObject.find(".articleCommentCount").html('<a href="' + issueLink + '" target="_blank">' + commentsString + '</a>');
             newArticleObject.find(".articleAuthor").text(githubIssue.user.login);
             newArticleObject.find(".articleDateTime").text(formatDate(githubIssue.created_at, false, false));
             newArticleObject.find(".expandCollapseButton").click(() => toggleArticle(newArticleObject));
-            newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
+            //newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
             newArticleObject.githubIssue = githubIssue;
             newArticleObject.commentsLoaded = false;
 
@@ -250,19 +256,34 @@ TODO
         }
 
         function isAtBottom() {
-            scrollHeight = Math.max(
-                Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
-                Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
-                Math.max(document.body.clientHeight, document.documentElement.clientHeight)
-            );
-            scrollPosition = $(window).innerHeight() + $(window).scrollTop();
-            return scrollPosition >= scrollHeight - 25;
+            return $(window).scrollTop() + $(window).height() >= $("body").height();
         }
 
         function showMoreArticlesInView() {
             if (isAtBottom())
                 showNextArticle();
         }
+
+        function getUrlParameter(parameterName) {
+            var currentUrl = window.location.search.substring(1),
+                splitUrlVariables = currentUrl.split('&'),
+                urlParameterName,
+                i;
+
+            for (i = 0; i < splitUrlVariables.length; i++) {
+                urlParameterName = splitUrlVariables[i].split('=');
+
+                if (urlParameterName[0] === parameterName) {
+                    return urlParameterName[1] === undefined ? true : decodeURIComponent(urlParameterName[1]);
+                }
+            }
+
+            return undefined;
+        };
+
+        function getUrlHash() {
+            return window.location.hash.substring(1);
+        };
         
         $(document).ready(function () {
 
@@ -272,16 +293,28 @@ TODO
 
             collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
 
-            $(window).resize(function () {
-                if (expandedArticle !== undefined) {
-                    expandArticle(expandedArticle); // we refresh the sizing of the element
-                }
-                showMoreArticlesInView();
-            });
+            var urlHash = getUrlHash();
+            var urlHashInt = parseInt(urlHash);
+            var singleArticleToDisplay = undefined;
+            if (!isNaN(urlHashInt)) {
+                singleArticleToDisplay = urlHashInt;
+            }
+            var displaySingle = singleArticleToDisplay !== undefined;
 
-            $(window).scroll(function () {
-                showMoreArticlesInView();
-            });
+            if (!displaySingle) {
+
+                $(window).resize(function () {
+                    if (expandedArticle !== undefined) {
+                        expandArticle(expandedArticle); // we refresh the sizing of the element
+                    }
+                    showMoreArticlesInView();
+                });
+
+                $(window).scroll(function () {
+                    showMoreArticlesInView();
+                });
+
+            }
 
             // const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
             // markdownRequest
@@ -302,22 +335,36 @@ TODO
 
             // }, 2000);
 
-            const request = window.fetch(getIssuesUrl);
+            var urlToFetchFrom = getIssuesUrl;
+
+            if (displaySingle) {
+                urlToFetchFrom = repoApiUrl + "/issues/" + singleArticleToDisplay;
+            }
+
+            const request = window.fetch(urlToFetchFrom);
 
             request
                 .then(responseJson => responseJson.json()) // tries to fully read json from response
                 .then(jsonData => {
                     debugPanel.text(JSON.stringify(jsonData, null, "  "));
                     $("#noJavaScriptNotice").hide(100);
-                    appendIssuesListToPage(jsonData);
-                    $("#articleLoader").hide(100);
 
-                    for (let index = 0; index < loadedArticles.length; index++) {
-                        setTimeout(function () {
-                            if (isAtBottom())
-                                showNextArticle();
-                        }, index * 500);
+                    if (displaySingle) {
+                        appendArticleToPage(jsonData);
+                        showNextArticle();
+                        setTimeout(function () { expandArticle(loadedArticles[0]); }, 500);
                     }
+                    else {
+                        appendIssuesListToPage(jsonData);
+                        for (let index = 0; index < loadedArticles.length; index++) {
+                            setTimeout(function () {
+                                if (isAtBottom())
+                                    showNextArticle();
+                            }, index * 500);
+                        }
+                    }
+                    
+                    $("#articleLoader").hide(100);
                 })
                 .catch(error => debugPanel.text(error));
         });
