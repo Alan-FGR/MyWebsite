@@ -63,7 +63,9 @@ TODO
         }
 
         function formatAbsoluteLink(relative) {
-            return window.location.hostname + relative;
+            if (window.location.protocol == "file:")
+                return window.location.hostname + relative;
+            return "//alangamedev.com" + relative;
         }
 
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -148,17 +150,18 @@ TODO
 
         function formatDate(dateUtcString, includeTime, shortMonthName) {
             var date = new Date(dateUtcString);
-            var day = date.getDay();
+            var day = date.getDate();
             var monthName = monthNames[date.getMonth()];
             var year = date.getFullYear();
+            
+            if (shortMonthName) monthName = monthName.substr(0, 3);
+            
+            var dateString = monthName + " " + day + ", " + year;
+            
+            if (!includeTime) return dateString;
+            
             var hour = date.getHours();
             var minute = date.getMinutes();
-
-            if (shortMonthName) monthName = monthName.substr(0, 3);
-
-            var dateString = monthName + " " + day + ", " + year;
-
-            if (!includeTime) return dateString;
 
             return dateString + " at " + hour + ":" + minute;
         }
@@ -284,8 +287,26 @@ TODO
         function getUrlHash() {
             return window.location.hash.substring(1);
         };
+
+        function getUrlSearch() {
+            return window.location.search.substring(1);
+        };
         
         $(document).ready(function () {
+
+            var urlSearch = getUrlSearch();
+            if (urlSearch == "projects") {
+                $("#projects").show();
+                return;
+            }
+            else if (urlSearch == "about") {
+                $("#about").show();
+                return;
+            }
+            else if (urlSearch == "contact") {
+                $("#contact").show();
+                return;
+            }
 
             articleTemplate = $(".articleTemplate");
             commentTemplate = articleTemplate.find(".commentTemplate");
@@ -293,8 +314,7 @@ TODO
 
             collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
 
-            var urlHash = getUrlHash();
-            var urlHashInt = parseInt(urlHash);
+            var urlHash = getUrlHash();var urlHashInt = parseInt(urlHash);
             var singleArticleToDisplay = undefined;
             if (!isNaN(urlHashInt)) {
                 singleArticleToDisplay = urlHashInt;
@@ -353,6 +373,7 @@ TODO
                         appendArticleToPage(jsonData);
                         showNextArticle();
                         setTimeout(function () { expandArticle(loadedArticles[0]); }, 500);
+                        $(".articleExpander").hide();
                     }
                     else {
                         appendIssuesListToPage(jsonData);
@@ -379,15 +400,67 @@ TODO
             <img class="headerLogo" src="logo.png">
             <h1 class="headerText">Alan's Website</h1>
             <nav class="headerNav">
-                <a href="#blog">BLOG</a>
-                <a href="#projects">PROJECTS</a>
-                <a href="#about">ABOUT</a>
-                <a href="#contact">CONTACT</a>
+                <a href="?blog">BLOG</a>
+                <a href="?projects">PROJECTS</a>
+                <a href="?about">ABOUT</a>
+                <a href="?contact">CONTACT</a>
             </nav>
         </div>
     </header>
 
     <div id="contentWrapper">
+
+        <article id="projects" style="display: none;">
+            <section class="articleSection">
+                <div class="articleHeader">
+                    <div class="articleHeaderTopLine">
+                        <h2 class="articleTitle">PROJECTS</h2>
+                    </div>
+                </div>
+                <div class="articleClipper" style="height: 16em;">
+                    <div class="articleContent">
+                        <div class="articleBodyContent">
+                            Projects page coming soon!
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </article>
+
+        <article id="about" style="display: none;">
+            <section class="articleSection">
+                <div class="articleHeader">
+                    <div class="articleHeaderTopLine">
+                        <h2 class="articleTitle">ABOUT</h2>
+                    </div>
+                </div>
+                <div class="articleClipper" style="height: 16em;">
+                    <div class="articleContent">
+                        <div class="articleBodyContent">
+                            About page coming soon!
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </article>
+
+        <article id="contact" style="display: none;">
+            <section class="articleSection">
+                <div class="articleHeader">
+                    <div class="articleHeaderTopLine">
+                        <h2 class="articleTitle">CONTACT</h2>
+                    </div>
+                </div>
+                <div class="articleClipper" style="height: 16em;">
+                    <div class="articleContent">
+                        <div class="articleBodyContent">
+                            Contact page coming soon!
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </article>
+
         <!-- This is the article template object we use to populate with actual data -->
         <article class="articleTemplate" style="display: none;">
             <section class="articleSection">

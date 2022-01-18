@@ -228,6 +228,7 @@ article {
 
 .articleTitle {
     flex: 1;
+    margin-right: 2.5em;
     /*     color: #fff;
         text-shadow: 
         0 0.05em 0 #ccc,
