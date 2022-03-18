@@ -1,9 +1,7 @@
 <!-- Hand coded by Alan (https://github.com/Alan-FGR) -->
-<!-- 
-TODO
-- Links to specific articles
-- 
--->
+<!-- TODO
+    1. Get rid of JQuery
+ -->
 <!doctype html>
 <html lang="en">
 
@@ -20,30 +18,26 @@ TODO
     <meta property="og:title" content="Alan's Website">
     <meta property="og:type" content="website">
     <meta property="og:url" content="">
-    <meta property="og:image" content="image.png">
+    <meta property="og:image" content="logo.png">
 
     <!-- Webpage Icons -->
     <!-- <link rel="icon" href="/favicon.ico">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png"> -->
+    -->
+    <link rel="icon" href="/logo.png">
+    <link rel="apple-touch-icon" href="/logo.png">
 
-    <!-- Styles -->
-    <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Condensed&family=Exo&display=swap"
-        rel="stylesheet">
-
-    <!-- CSS3 Animations -->
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Encode+Sans+Condensed&family=Exo&display=swap" rel="stylesheet">
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"
-        referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js" crossorigin="anonymous"
-        referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
 
         const userName = "Alan-FGR";
@@ -58,7 +52,7 @@ TODO
             return repoApiUrl + "/issues/" + issueNumber + "/comments";
         }
 
-        function formatIssueLink(issueNumber) {
+        function formatLeaveCommentLink(issueNumber) {
             return repoLinkUrl + "/issues/" + issueNumber + "#issue-comment-box";
         }
 
@@ -68,21 +62,20 @@ TODO
             return "//alangamedev.com" + relative;
         }
 
+        function linkifyString(input) {
+            return input.toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9_-]+/g, '');
+        }
+
+        function getUrlSearch() {
+            return window.location.search.substring(1);
+        };
+
         const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-        var debugPanel;
-        var articleTemplate;
+        var mainElement;
+        var pairTemplate;
         var commentTemplate;
-        var expandedArticle = undefined;
-        var collapsedArticleClipperHeight = undefined;
-
-        var loadedArticles = [];
-        var shownIndex = 0;
-
-        function formatIsoDateTime(isoDateTime) {
-            new Date(isoDateTime).toLocaleDateString(undefined,
-                { year: 'numeric', month: 'long', day: 'numeric' });
-        }
+        var globalCounter;
 
         function markdownToHtml(markdown) {
             var converter = new showdown.Converter({
@@ -100,52 +93,12 @@ TODO
             return (converter.makeHtml(markdown));
         }
 
-        function collapseArticle(articleObject, scrollToTop) {
-            if (articleObject === undefined) return;
-            articleObject.find(".articleClipper").stop(true)
-                .animate({ height: collapsedArticleClipperHeight }, { queue: false, duration: 500 });
-            startAutoScroll(articleObject);
-            articleObject.find(".arrow").removeClass("arrowUp");
-            expandedArticle = undefined;
-            if (scrollToTop) {
-                $([document.documentElement, document.body]).animate(
-                    { scrollTop: articleObject.offset().top - 160 },
-                    { queue: false, duration: 400 });
-            }
-        }
-
-        function expandArticle(articleObject) {
-            var content = articleObject.find(".articleContent");
-            content.stop(true).animate({ marginTop: 0 }, 1000);
-            articleObject.find(".articleClipper")
-                .animate({ height: content.outerHeight() }, { queue: false, duration: 500 });
-            // todo collapse previous
-            articleObject.find(".arrow").addClass("arrowUp");
-            expandedArticle = articleObject;
-
-            loadArticleComments(articleObject);
-        }
-
-        function toggleArticle(articleObject) {
-            if (expandedArticle === articleObject) { // collapsing clicked
-                collapseArticle(articleObject, true);
-                return;
-            }
-            if (expandedArticle !== undefined) // collapsing other
-                collapseArticle(expandedArticle, false);
-            expandArticle(articleObject);
-        }
-        
-        function startAutoScroll(articleObject) {
-            function loopScroll() {
-                var content = articleObject.find(".articleContent");
-                var clipperHeight = articleObject.find(".articleClipper").height();
-                var totalHeight = clipperHeight - content.outerHeight(true);
-                content
-                    .animate({ marginTop: totalHeight }, 5000)
-                    .animate({ marginTop: 0 }, 2000, loopScroll);
-            }
-            loopScroll();
+        function formatCountable(number, singularWord) {
+            if (number == 0)
+                return "No " + singularWord;
+            if (number == 1)
+                return "1 " + singularWord;
+            return number + " " + singularWord + "s";
         }
 
         function formatDate(dateUtcString, includeTime, shortMonthName) {
@@ -166,379 +119,296 @@ TODO
             return dateString + " at " + hour + ":" + minute;
         }
 
-        function appendCommentObject(parentObject, githubComment, noHeader) {
-            var newCommentObject = commentTemplate.clone().appendTo(parentObject);
-            newCommentObject.find(".commentBody").html(markdownToHtml(githubComment.body));
-            newCommentObject.show();
-            if (noHeader) {
-                newCommentObject.find(".commentHeader").hide();
-                return;
-            }
-            newCommentObject.find(".commenterName").text(githubComment.user.login);
-            newCommentObject.find(".commentDateTime").text(formatDate(githubComment.created_at, true, true));
+        function loadArticleBodyOnCardClick() {
+            loadArticleBody($(this));
         }
 
-        function loadArticleComments(articleObject) {
+        function loadArticleBody(articleHeader) {
+            var articleElement = articleHeader.next();
+            var isCurrentlySelected = articleHeader.hasClass('selected');
+            var articleData = articleHeader.data('articleData');
 
-            if (articleObject.commentsLoaded)
-                return;
+            // unselect previously selected
+            var selectedSection = $('section.selected').removeClass('selected');
+            var selectedArticle = $('article.selected').removeClass('selected').slideUp(400);
 
-            articleObject.commentsLoaded = true;
+            if (!articleData.bodyLoaded) {
+                console.log("Loading HTML for " + articleHeader.text());
+                articleElement.find(".articleBody").html(markdownToHtml(articleData.bodyMarkdown));
+                articleData.bodyLoaded = true;
 
-            var commentsWrapper = articleObject.find(".commentsWrapper");
+                if (articleData.commentCount != 0) {
+                    loadComments(articleElement.find(".articleCommentsList"), articleData.issueNumber);
+                }
+                else {
+                    articleElement.find(".articleCommentsHeader>span").hide();
+                }
+            }
 
-            var commentsUrl = formatIssueCommentsUrl(articleObject.githubIssue.number);
+            if (isCurrentlySelected) {
+                articleHeader.removeClass('selected');
+                articleElement.removeClass('selected').slideUp(500);
+                window.history.pushState(null, null, window.location.pathname);
+            }
+            else {
+                var delay = selectedArticle.length > 0 ? 500 : 0;
+                articleHeader.addClass('selected');
+                articleElement.delay(delay).addClass('selected').finish().slideDown(500);
+                var anchorName = articleHeader.attr('id');
+                window.history.replaceState(null, null, "?" + anchorName);
+            }
+        }
 
+        function loadComments(parentObject, issueNumber){
+            var commentsUrl = formatIssueCommentsUrl(issueNumber);
             window.fetch(commentsUrl)
                 .then(responseJson => responseJson.json())
                 .then(githubCommentsList => {
                     githubCommentsList.forEach(githubComment => {
-                        appendCommentObject(commentsWrapper, githubComment, false);
+                        appendComment(parentObject, githubComment);
                     });
-                    expandArticle(articleObject);
                 })
-                .catch(error => commentsWrapper.text(error)); // TODO append
+                .catch(error => console.log(error)); // TODO
         }
 
-        function formatCountable(number, singularWord) {
-            if (number == 0)
-                return "No " + singularWord;
-            if (number == 1)
-                return "1 " + singularWord;
-            return number + " " + singularWord + "s";
+        function appendComment(parentObject, githubComment) {
+            var newCommentObject = commentTemplate.clone().appendTo(parentObject);
+            newCommentObject.css("display", "none");
+            newCommentObject.find(".commentBody").html(markdownToHtml(githubComment.body));
+            newCommentObject.find(".commentHeader>span").text(githubComment.user.login);
+            newCommentObject.find(".commentHeader>img").attr("src", githubComment.user.avatar_url + "&size=64");
+            newCommentObject.find(".commentHeader>time").text(formatDate(githubComment.created_at, true, true));
+            newCommentObject.delay(500).slideDown(500);
         }
 
-        function displayArticle(newArticleObject) {
-            newArticleObject.show(250);
-            startAutoScroll(newArticleObject);
-        }
+        function appendIssueCardToPage(githubIssue) {
 
-        function appendArticleToPage(githubIssue) {
-
-            var issueLink = formatIssueLink(githubIssue.number);
+            //var issueLink = formatIssueLink(githubIssue.number);
             var commentsString = formatCountable(githubIssue.comments, "comment");
+            var dateString = formatDate(githubIssue.created_at, false, true);
 
-            var newArticleObject = articleTemplate.clone().appendTo($("#contentWrapper"));
-            newArticleObject.find(".articleTitle").html(githubIssue.title + 
-            '<a href='+formatAbsoluteLink("#"+githubIssue.number)+'><img src="permalink.png" title="Permalink" /></a>'
-            );
-            newArticleObject.find(".articleBodyContent").html(markdownToHtml(githubIssue.body));
-            newArticleObject.find(".articleCommentCount").html('<a href="' + issueLink + '" target="_blank">' + commentsString + '</a>');
-            newArticleObject.find(".articleAuthor").text(githubIssue.user.login);
-            newArticleObject.find(".articleDateTime").text(formatDate(githubIssue.created_at, false, false));
-            newArticleObject.find(".expandCollapseButton").click(() => toggleArticle(newArticleObject));
-            //newArticleObject.find(".articleTitle").click(() => toggleArticle(newArticleObject));
-            newArticleObject.githubIssue = githubIssue;
-            newArticleObject.commentsLoaded = false;
+            globalCounter++;
+            //var hue1 = 210 + (i * 230) % 50;
+            //var hue2 = (i + 28) * 68;
 
-            var noticeMarkdown = commentsString + " so far. Add your opinion [on GitHub!](" + issueLink + ")";
+            // template.children().first().css({
+            //     //     'background': 'radial-gradient(150% 100%, white 10%, hsl('+hue1+', 0%, 0%) 10%) 100% 100% / 200% 200%',
+            //     //     'animation-duration': (1+(i*12.3)%1)+'s',
+            //     //'animation-delay': (((i * 4)) * -1) + 's',
+            // });
+            // // template.children().last().css('background', 'radial-gradient(ellipse at 100% 100%, white 0%, hsl('+hue2+', 100%, 80%) 20%, hsl('+hue1+', 100%, 96%) 40%, hsl('+hue1+', 100%, 90%) 60%, hsl('+hue1+', 100%, 96%) 70%');
+            // template.children().clone().appendTo(mainElement);
 
-            if (githubIssue.comments == 0) {
-                newArticleObject.commentsLoaded = true;
-                noticeMarkdown = "No comments yet. [Start the discussion on GitHub!](" + issueLink + ")";
-            }
+            var newArticleCard = pairTemplate.children().first().clone().appendTo(mainElement);
+            var newArticleBody = pairTemplate.children().last().clone().appendTo(mainElement);
+
+            newArticleCard.css({
+                'animation-delay': (((globalCounter * 4)) * -1) + 's',
+            });
+
+            newArticleCard.attr('id', linkifyString(githubIssue.title));
+
+            newArticleCard.find(".articleCardHeader").text(githubIssue.title);
+            newArticleCard.find(".articleCardBottomLine > time").text(dateString);
+            newArticleCard.find(".articleCardBottomLine > span").text(commentsString);
+            newArticleCard.data('articleData', {
+                bodyMarkdown: githubIssue.body,
+                issueNumber: githubIssue.number,
+                bodyLoaded: false,
+                commentCount: githubIssue.comments
+            });
+            newArticleCard.click(loadArticleBodyOnCardClick);
             
-            appendCommentObject(newArticleObject.find(".commentsWrapper"), { body: noticeMarkdown }, true);
-
-            loadedArticles.push(newArticleObject);
-
-            //displayArticle(newArticleObject);
+            newArticleBody.find(".leaveCommentLink").attr("href", formatLeaveCommentLink(githubIssue.number));
+            
         }
 
         function appendIssuesListToPage(githubIssuesList) {
             githubIssuesList.forEach(githubIssue => {
-                appendArticleToPage(githubIssue);
+                appendIssueCardToPage(githubIssue);
             });
         }
 
-        function showNextArticle() {
-            if (shownIndex < loadedArticles.length) {
-                displayArticle(loadedArticles[shownIndex]);
-                shownIndex++;
-            }
+        function copyEmailToClipboard() {
+            var textInput = document.getElementById("hiddenEmailTextInput");
+            textInput.select();
+            textInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(textInput.value);
+            alert("The email address was copied to your clipboard:\n" + textInput.value);
         }
 
-        function isAtBottom() {
-            return $(window).scrollTop() + $(window).height() >= $("body").height();
-        }
-
-        function showMoreArticlesInView() {
-            if (isAtBottom())
-                showNextArticle();
-        }
-
-        function getUrlParameter(parameterName) {
-            var currentUrl = window.location.search.substring(1),
-                splitUrlVariables = currentUrl.split('&'),
-                urlParameterName,
-                i;
-
-            for (i = 0; i < splitUrlVariables.length; i++) {
-                urlParameterName = splitUrlVariables[i].split('=');
-
-                if (urlParameterName[0] === parameterName) {
-                    return urlParameterName[1] === undefined ? true : decodeURIComponent(urlParameterName[1]);
-                }
-            }
-
-            return undefined;
-        };
-
-        function getUrlHash() {
-            return window.location.hash.substring(1);
-        };
-
-        function getUrlSearch() {
-            return window.location.search.substring(1);
-        };
-        
         $(document).ready(function () {
 
-            var urlSearch = getUrlSearch();
-            if (urlSearch == "projects") {
-                $("#projects").show();
-                return;
-            }
-            else if (urlSearch == "about") {
-                $("#about").show();
-                return;
-            }
-            else if (urlSearch == "contact") {
-                $("#contact").show();
-                return;
-            }
+            $('#copyEmailIcon').click(copyEmailToClipboard);
 
-            articleTemplate = $(".articleTemplate");
-            commentTemplate = articleTemplate.find(".commentTemplate");
-            debugPanel = $("#debugPanel");
+            pairTemplate = $('#articlePair');
+            commentTemplate = $('#commentTemplate').children().first();
 
-            collapsedArticleClipperHeight = articleTemplate.find(".articleClipper").height();
+            mainElement = $('main');
+            mainElement.slideUp();
 
-            var urlHash = getUrlHash();var urlHashInt = parseInt(urlHash);
-            var singleArticleToDisplay = undefined;
-            if (!isNaN(urlHashInt)) {
-                singleArticleToDisplay = urlHashInt;
-            }
-            var displaySingle = singleArticleToDisplay !== undefined;
-
-            if (!displaySingle) {
-
-                $(window).resize(function () {
-                    if (expandedArticle !== undefined) {
-                        expandArticle(expandedArticle); // we refresh the sizing of the element
-                    }
-                    showMoreArticlesInView();
-                });
-
-                $(window).scroll(function () {
-                    showMoreArticlesInView();
-                });
-
-            }
-
-            // const markdownRequest = fetch("https://raw.githubusercontent.com/Alan-FGR/aelum/master/README.md");
-            // markdownRequest
-            //     .then(responseMarkdown => responseMarkdown.text())
-            //     .then(markdown => { appendArticleToPage(markdown) })
-            //     .catch(
-            //         error => debugPanel.text(error)
-            //     );
-
-            // return;
-            // setTimeout(function () {
-            //     for (let i = 0; i < 10; i++) {
-
-            //         setTimeout(function () {
-            //             appendArticleToPage(i);
-            //         }, i * 1000);
-            //     }
-
-            // }, 2000);
+            globalCounter = 0;
 
             var urlToFetchFrom = getIssuesUrl;
 
-            if (displaySingle) {
-                urlToFetchFrom = repoApiUrl + "/issues/" + singleArticleToDisplay;
-            }
+            // if (displaySingle) {
+            //     urlToFetchFrom = repoApiUrl + "/issues/" + singlesectionToDisplay;
+            // }
 
             const request = window.fetch(urlToFetchFrom);
+
+            $('#currentYear').text(new Date().getFullYear());
+
+            $("#noJavaScriptNotice").hide();
+
+            
+            mainElement.slideDown(1000);
+            appendIssuesListToPage(
+                [
+                    {
+                        "number": 0,
+                        "comments": 0,
+                        "title": "THIS IS A WIP!",
+                        "created_at": "2022-02-22T22:22:22Z",
+                        "body": "#This website is a work in progress! \n##It's expected to be up and running soon!\nLorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
+                    },
+                    {
+                        "number": 0,
+                        "comments": 0,
+                        "title": "ETA Q2 2022!",
+                        "created_at": "2022-02-22T22:22:22Z",
+                        "body": "Lorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
+                    },
+                    {
+                        "number": 0,
+                        "comments": 0,
+                        "title": "Lorem ipsum dolor sit amet",
+                        "created_at": "2022-02-22T22:22:22Z",
+                        "body": "Lorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
+                    },
+                    {
+                        "number": 0,
+                        "comments": 0,
+                        "title": "Lorem ipsum dolor sit amet admodum aequo aristotelem",
+                        "created_at": "2022-02-22T22:22:22Z",
+                        "body": "Lorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
+                    }
+                ]
+            )
+            return;
 
             request
                 .then(responseJson => responseJson.json()) // tries to fully read json from response
                 .then(jsonData => {
-                    debugPanel.text(JSON.stringify(jsonData, null, "  "));
-                    $("#noJavaScriptNotice").hide(100);
+                    // debugPanel.text(JSON.stringify(jsonData, null, "  "));
 
-                    if (displaySingle) {
-                        appendArticleToPage(jsonData);
-                        showNextArticle();
-                        setTimeout(function () { expandArticle(loadedArticles[0]); }, 500);
-                        $(".articleExpander").hide();
-                    }
-                    else {
+                    // if (displaySingle) {
+                    //     appendsectionToPage(jsonData);
+                    //     setTimeout(function () { expandsection(loadedsections[0]); }, 500);
+                    // }
+                    // else {
                         appendIssuesListToPage(jsonData);
-                        for (let index = 0; index < loadedArticles.length; index++) {
-                            setTimeout(function () {
-                                if (isAtBottom())
-                                    showNextArticle();
-                            }, index * 500);
-                        }
+                    // }
+
+                    mainElement.slideDown(1000);
+
+                    var linkArticle = getUrlSearch();
+
+                    if (!linkArticle)
+                        return;
+
+                    console.log(linkArticle);
+
+                    var linkArticleCard = $('#' + linkArticle);
+
+                    if (linkArticleCard) {
+                        setTimeout(() => {
+                            loadArticleBody(linkArticleCard);
+                            $([document.documentElement, document.body]).animate({
+                                scrollTop: linkArticleCard.offset().top - 20
+                            }, 500);
+                        }, 1500);
                     }
                     
-                    $("#articleLoader").hide(100);
+                    // $("#sectionLoader").hide(100);
                 })
-                .catch(error => debugPanel.text(error));
+                .catch(error => {
+                    $("#noJavaScriptNotice").show(100);
+                    $("#noJavaScriptNotice > h1").text(error)
+                });
+
         });
 
     </script>
+
 </head>
 
 <body>
-
-    <header>
-        <div class="headerContent">
-            <img class="headerLogo" src="logo.png">
-            <h1 class="headerText">Alan's Website</h1>
-            <nav class="headerNav">
-                <a href="?blog">BLOG</a>
-                <a href="?projects">PROJECTS</a>
-                <a href="?about">ABOUT</a>
-                <a href="?contact">CONTACT</a>
-            </nav>
-        </div>
-    </header>
-
-    <div id="contentWrapper">
-
-        <article id="projects">
-            <section class="articleSection">
-                <div class="articleHeader">
-                    <div class="articleHeaderTopLine">
-                        <h2 class="articleTitle">WORK IN PROGRESS!!!</h2>
-                    </div>
+    <div class="template" id="articlePair">
+        <section>
+            <div class="articleCard">
+                <h2 class="articleCardHeader">1 Header asd fa sdf asd fasdfasdfasd fasdf fadfasdfasdfs asdf asdfasd ffadfa asfds</h2>
+                <div class="articleCardBottomLine">
+                    <time>22/02/2022</time>
+                    <span>12 comments</span>
                 </div>
-                <div class="articleClipper" style="height: 16em;">
-                    <div class="articleContent">
-                        <div class="articleBodyContent">
-                            <h2>
-                                This website is a work in progress!<br>
-                                This is basically a JavaScript client for GitHub API where I plan to congregate most of my publications.<br>
-                                <b>ETA is Q1 2022</b>
-                            </h2>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </div>
+        </section>
+        <article>
+            <div class="articleBody"></div>
+            <div class="articleComments">
+                <div class="articleCommentsHeader"><span>Comments</span></div>
+                <ol class="articleCommentsList"></ol>
+                <div class="comment"><a target="_self" class="leaveCommentLink">Leave a comment</a></div>
+            </div>
         </article>
-
-        <article id="projects" style="display: none;">
-            <section class="articleSection">
-                <div class="articleHeader">
-                    <div class="articleHeaderTopLine">
-                        <h2 class="articleTitle">PROJECTS</h2>
-                    </div>
-                </div>
-                <div class="articleClipper" style="height: 16em;">
-                    <div class="articleContent">
-                        <div class="articleBodyContent">
-                            Projects page coming soon!
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </article>
-
-        <article id="about" style="display: none;">
-            <section class="articleSection">
-                <div class="articleHeader">
-                    <div class="articleHeaderTopLine">
-                        <h2 class="articleTitle">ABOUT</h2>
-                    </div>
-                </div>
-                <div class="articleClipper" style="height: 16em;">
-                    <div class="articleContent">
-                        <div class="articleBodyContent">
-                            About page coming soon!
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </article>
-
-        <article id="contact" style="display: none;">
-            <section class="articleSection">
-                <div class="articleHeader">
-                    <div class="articleHeaderTopLine">
-                        <h2 class="articleTitle">CONTACT</h2>
-                    </div>
-                </div>
-                <div class="articleClipper" style="height: 16em;">
-                    <div class="articleContent">
-                        <div class="articleBodyContent">
-                            Contact page coming soon!
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </article>
-
-        <!-- This is the article template object we use to populate with actual data -->
-        <article class="articleTemplate" style="display: none;">
-            <section class="articleSection">
-                <div class="articleHeader">
-                    <div class="articleHeaderTopLine">
-                        <h2 class="articleTitle">Article Title</h2>
-                        <h3 class="articleCommentCount">Comment Count</h3>
-                    </div>
-                    <div class="articleHeaderBottomLine">
-                        <span class="articleAuthor">Article Author</span>
-                        <span class="articleDateTime">December 25, 1995b</span>
-                    </div>
-                </div>
-                <div class="articleClipper" style="height: 16em;">
-                    <div class="articleContent">
-                        <div class="articleBodyContent"></div>
-                        <div class="articleComments">
-                            <div class="commentsWrapper">
-                                <div class="commentTemplate" style="display: none;">
-                                    <div class="commentHeader">
-                                        <div class="commenterName">Commenter Name</div>
-                                        <div class="commentDateTime">Dec 29, 1995</div>
-                                    </div>
-                                    <div class="commentBody">
-                                        Comment Body
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- TODO -->
-                            <div class="spinner commentsLoadingSpinner" style="display: none;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="articleExpander">
-                    <a class="expandCollapseButton">
-                        <div class="arrow"></div>
-                    </a>
-                </div>
-            </section>
-        </article>
-        <!-- End of article template object -->
-
     </div>
-
-    <!-- Loading spinner always on bottom unless there's nothing to load -->
-    <div id="articleLoader">
-        <!-- TODO -->
-        <div id="articleLoadingSpinner" class="spinner" style="display: none;"></div>
-        <span id="noJavaScriptNotice">JavaScript Required!<br />(and a modern browser)</span>
+    <div class="template" id="commentTemplate">
+        <li class="comment">
+            <div class="commentHeader">
+                <img>
+                <span>Commenter</span>
+                <time>22/02/2022</time>
+            </div>
+            <p class="commentBody">1 comment asd fa sdf asd fasdfasdfasd fasdf fadfasdfasdfs asdf asdfasd ffadfa asfds</p>
+        </li>
     </div>
-
-    <pre id="debugPanel" style="display: none;">Loading JavaScript...</pre>
-
-    <footer>
-
-    </footer>
-
+    <div id="wrapper">
+        <header>
+            <div class="mainLogoOutline tooltip">
+                <div class="mainLogo"></div>
+            </div>
+            <div class="headerData">
+                <div class="headerDataColumn">
+                    <p class="nameInHeader">Alan Ciampaglia</p>
+                    <p class="positionInHeader">Senior Software Engineer</p>
+                    <div class="headerIcons">
+                        <a class="tooltip" target="_blank" href="https://github.com/Alan-FGR"><img src="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/6.13.0/github.svg">
+                            <span class="tooltipText">GitHub</span>
+                        </a>
+                        <a class="tooltip" target="_blank" href="https://www.linkedin.com/in/alandev/"><img src="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/6.13.0/linkedin.svg">
+                            <span class="tooltipText">LinkedIn</span>
+                        </a>
+                        <a class="tooltip" href="#" id="copyEmailIcon"><img src="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/6.13.0/gmail.svg">
+                            <span class="tooltipText">Copy&nbsp;email&nbsp;address to&nbsp;clipboard</span>
+                        </a>
+                        <input type="text" id="hiddenEmailTextInput" value="Alan Ciampaglia <alanqdev@gmail.com>">
+                    </div>
+                </div>
+            </div>
+            </header>
+            
+            <div id="noJavaScriptNotice">
+                <h1>Please make sure you're on a modern browser and JavaScript is enabled!</h1>
+            </div>
+            
+            <main></main>
+            
+            <footer>
+                &copy; <span id="currentYear">Current Year</span>&nbsp;—&nbsp;Hand-coded with <span class="footerHeart">♥</span> by Alan
+                Ciampaglia
+            </footer>
+    </div>
     <!-- <script src="js/scripts.js"></script> -->
 </body>
 
