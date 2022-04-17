@@ -148,6 +148,10 @@ main {
     grid-template-columns: repeat(auto-fit, minmax(18em, 1fr));
 }
 
+.articleBody img {
+    max-width: 100%;
+}
+
 .articleComments {
     border-top: 0.2em solid black;
     margin-top: 4em;
@@ -239,6 +243,10 @@ section {
 
 }
 
+section:hover {
+    transform: scale(0.85);
+}
+
 section>*>h2 {
     margin: 0;
 }
@@ -247,6 +255,19 @@ section>*>h2 {
     background: white;
     padding: 1em;
     margin: 0.5em;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position-x: right;
+    background-position-y: center;
+    box-shadow: inset 10em 0 5em white, inset 0 -2.5em 1em white;
+}
+
+section.selected .articleCard {
+    /* background-image: none; */
+}
+
+.articleCard>* {
+    z-index: 1000;
 }
 
 .articleCardHeader {
@@ -254,6 +275,15 @@ section>*>h2 {
     line-height: 1.33em;
     overflow-x: auto;
     overflow-y: hidden;
+    text-shadow: 0 0.1em 0.1em white, 0 -0.1em 0.1em white, 0.1em 0 0.1em white;
+}
+
+.articleCardImage {
+    position: fixed;
+    top: 0.5em;
+    right: 0.5em;
+    height: 9em;
+    z-index: 0;
 }
 
 .articleCardBottomLine {

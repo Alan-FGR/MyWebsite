@@ -194,6 +194,13 @@
             return githubIssue.created_at;
         }
 
+        function findFirstImageInMarkdown(markdown) {
+            var regex = /!\[[^\]]*\]\((.*?)\)/;
+            var result = markdown.match(regex)
+            if (result && result.length > 1)
+                return result[1];
+        }
+
         function appendIssueCardToPage(githubIssue) {
 
             //var issueLink = formatIssueLink(githubIssue.number);
@@ -233,6 +240,11 @@
                 headerText =  githubIssue.title;
                 dateString = formatDate(githubIssue.created_at, false, true);
             }
+
+            var articleImage = findFirstImageInMarkdown(githubIssue.body);
+
+            if (articleImage)
+                newArticleCard.find(".articleCard").css('background-image', 'url(' + articleImage + ')');
 
             newArticleCard.find(".articleCardHeader").text(headerText);
             newArticleCard.find(".articleCardBottomLine > time").text(dateString);
