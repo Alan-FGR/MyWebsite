@@ -18,6 +18,7 @@ a:hover {
 header {
     padding: 2em;
     display: flex;
+    justify-content: space-between;
 }
 
 header:before {
@@ -58,8 +59,8 @@ header:before {
 
 .headerData {
     display: flex;
-    flex: 1;
-    justify-content: right;
+    /* flex: 1; */
+    /* justify-content: right; */
     animation: revealLater 1.5s ease;
 }
 
@@ -70,7 +71,7 @@ header:before {
 
 .headerIcons {
     display: flex;
-    flex: 1;
+    /* flex: 1; */
     justify-content: right;
     margin-top: 1em;
 }
