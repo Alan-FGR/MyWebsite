@@ -41,7 +41,7 @@
     <script>
 
         const userName = "Alan-FGR";
-        const repoName = "aelum";
+        const repoName = "alan-fgr.github.io";
 
         const repoApiUrl = "https://api.github.com/repos/" + userName + "/" + repoName;
         const getIssuesUrl = repoApiUrl + "/issues?per_page=100&creator=" + userName;
@@ -181,11 +181,23 @@
             newCommentObject.delay(500).slideDown(500);
         }
 
+        function parseDateInTitle(githubIssue) {
+            var hasExplicitDate = githubIssue.title[githubIssue.title.length - 11] == '~';
+            if (hasExplicitDate)
+                return githubIssue.title.substring(githubIssue.title.length - 10, githubIssue.title.length);
+            return undefined;
+        }
+
+        function getEffectiveDateString(githubIssue) {
+            var dateInTitle = parseDateInTitle(githubIssue);
+            if (dateInTitle != undefined) return dateInTitle;
+            return githubIssue.created_at;
+        }
+
         function appendIssueCardToPage(githubIssue) {
 
             //var issueLink = formatIssueLink(githubIssue.number);
             var commentsString = formatCountable(githubIssue.comments, "comment");
-            var dateString = formatDate(githubIssue.created_at, false, true);
 
             globalCounter++;
             //var hue1 = 210 + (i * 230) % 50;
@@ -208,7 +220,21 @@
 
             newArticleCard.attr('id', linkifyString(githubIssue.title));
 
-            newArticleCard.find(".articleCardHeader").text(githubIssue.title);
+            var headerText;
+            var dateString;
+            
+            var dateInTitle = parseDateInTitle(githubIssue);
+
+            if (dateInTitle != undefined) {
+                headerText = githubIssue.title.substring(0, githubIssue.title.length - 12)
+                dateString = formatDate(dateInTitle, false, true);;
+            }
+            else {
+                headerText =  githubIssue.title;
+                dateString = formatDate(githubIssue.created_at, false, true);
+            }
+
+            newArticleCard.find(".articleCardHeader").text(headerText);
             newArticleCard.find(".articleCardBottomLine > time").text(dateString);
             newArticleCard.find(".articleCardBottomLine > span").text(commentsString);
             newArticleCard.data('articleData', {
@@ -224,6 +250,13 @@
         }
 
         function appendIssuesListToPage(githubIssuesList) {
+            githubIssuesList.sort(
+                function (a, b) {
+                    var dateA = new Date(getEffectiveDateString(a));
+                    var dateB = new Date(getEffectiveDateString(b));
+                    return dateB - dateA;
+                }
+            )
             githubIssuesList.forEach(githubIssue => {
                 appendIssueCardToPage(githubIssue);
             });
@@ -263,39 +296,6 @@
 
             
             mainElement.slideDown(1000);
-            appendIssuesListToPage(
-                [
-                    {
-                        "number": 0,
-                        "comments": 0,
-                        "title": "THIS IS A WIP!",
-                        "created_at": "2022-02-22T22:22:22Z",
-                        "body": "#This website is a work in progress! \n##It's expected to be up and running soon!\nLorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
-                    },
-                    {
-                        "number": 0,
-                        "comments": 0,
-                        "title": "ETA Q2 2022!",
-                        "created_at": "2022-02-22T22:22:22Z",
-                        "body": "Lorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
-                    },
-                    {
-                        "number": 0,
-                        "comments": 0,
-                        "title": "Lorem ipsum dolor sit amet",
-                        "created_at": "2022-02-22T22:22:22Z",
-                        "body": "Lorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
-                    },
-                    {
-                        "number": 0,
-                        "comments": 0,
-                        "title": "Lorem ipsum dolor sit amet admodum aequo aristotelem",
-                        "created_at": "2022-02-22T22:22:22Z",
-                        "body": "Lorem ipsum dolor sit amet admodum aequo aristotelem bene commodo diligenter efficiatur laborum miseram obruamus oportere ruinae singulis sollicitudines. Diuturnum evertunt interesset magni molita, ponendam scribentur servire sive voluit. Familiari habendus laudatur multavit occulte praeclara sanciret. Comit persequeretur recte vicinum. Dulce habere militaris minuendas, nemore remotis suscipere vetuit. \n\nBonis clarorum democrito fructuosam geometria loquerer perspicuum satisfacit si. Amoris consumere effici falsi labore scriptorem tenere vitae. Graecis mediocris noctesque nunc, patriam quandam sitne. Alterum concessum firmissimum linguam minim, montes quaeri rationibus reliqui secundum sinat uberius videro. Definitionem earumque labor molestiae nominavi, occulte studium tribuat. Atomis dixisset facere faciendi facilisi istae sanos sol. \n\nElit facilisis praesentibus probaturum. Consequatur defensa etenim militaris nacti umquam vitiis. Chremes cupiditatibusque dominos eam ingeniis netus plato proin utamur vitam. Consecutionem diligi instructus intemperantes natus obruamus terentianus. Aliquod audiam dicantur inculta integris laudari liberos magnum perspiciatis plerumque prodesset. Andriam beate conectitur fortibus, meminerunt mente provident publicam, rutrum sentiamus videtisne videtur vidisse. \n\nAit amatoriis desistemus facilisi huic laetitia paria politus potiendi. Brevi conturbamur ferre ignoratione ratio studiis. Bibendum conficiuntur pellentesque sapientiam vicinum. Delectatum excepteur minuendas partis. Amicis eumque maximis movere, paulo renovata verear. Causa gloriatur honestum impetum inhaererent, simulent voluptas voluptatem. Concordia esse eximiae legat levitatibus lictores probet suas tolerabiles velim. \n\nAccedere conectitur cras cuiquam, duo eo hominem horreat, mandamus minuti periculum perpetuis profecta scripserit soluta. Atque corpus displicet graeco, iudicatum magnam multos scribendi torquate. Accumsan cedentem corrigere expetendas fortunae, graece hendrerit ignavia magnis moribus, repellere transferre. Civibus fuissent laoreet malis meis opus patria quaeri sentiant tuo uti. \n\nExercendi indicaverunt initiis ipsam ipso, mutat nudus percurri sciscat sequi, sociis unam. Aliquid artes consilio fermentum, recordamur sensibus urbes. Antiopam chremes didicisset timidiores. Alterum arte diceret dixit, ei eos fruuntur fugiendus, laboribus legere montes navigandi pleniorem sonet tradere. \n\nAnim dubio exercitumque facillimis improborum, inculta ius lectorem liberos numquam oblique triario tuemur. Brevi celeritas diligenter erant hac indocti ita sensibus tollunt ullum veritus vestibulum vivatur vocant. Alios animadversionem cubilia emancipaverat infantes, ipse nullam repellendus si stabilitas, sumitur tenuit varias. Appetere bonorum dolere ego gubergren, ponderum postulant. Afranius alienae amotio censet conquisitis, debilitati dubitemus exerci graecis philosophi quaerimus repellere suas videre. Asperiores distinguantur fugiendis naturales parentes tranquillitatem. Appellant audaces conquirendae eas imperitos, invitat maximos minuit sanctus spernat. \n\nContra directam fruentem nusquam. Admonere aliae commodo exiguam ingeniis, iudico muniti spe verum. Eisque futuris intervalla levis pondere referatur. Aristotele consecutus curis hunc, insolens quidque restat theophrasti, turbulentaeque viam. Acuti cibo collaudata conversam, ennii fugiat gloriae greges labitur mnesarchum platone soliditatem tantas. Aperta consilio cupidatat inermis tollit. Aliud decore dictas ero ficta horribiles imperio laetetur omnisque placebit purus quantus. \n\nAtomorum cibo conveniunt incurreret pacuvii verum. Appetendi consequat expectant haeret mollitia nomine putant semper. Doctrina innumerabiles ius locatus meo, nacti stabilique videtisne. \n\nCivium consentaneum constantia erunt frequenter inquam momenti nullas pecuniae sempiternum titillaret. Aliquos aristotelem cogitemus desiderent mala repugnantiumve vitiis. Misisti motu pariuntur taciti tantam. Alii caelo compositis epicurus partitio. Discordant doctrinis eirmod facete fore, libidinem modum optimi probes virtute. Amarissimam amori consilia fugiendus impensa, omne possit."
-                    }
-                ]
-            )
-            return;
 
             request
                 .then(responseJson => responseJson.json()) // tries to fully read json from response
