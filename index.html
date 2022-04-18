@@ -247,7 +247,7 @@
             if (articleImage)
                 newArticleCard.find(".articleCard").css('background-image', 'url(' + articleImage + ')');
 
-            newArticleCard.find(".articleCardHeader").text(headerText);
+            newArticleCard.find(".articleCardHeaderSpan").text(headerText);
             newArticleCard.find(".articleCardBottomLine > time").text(dateString);
             newArticleCard.find(".articleCardBottomLine > span").text(commentsString);
             newArticleCard.data('articleData', {
@@ -271,7 +271,8 @@
                 }
             )
             githubIssuesList.forEach(githubIssue => {
-                appendIssueCardToPage(githubIssue);
+                if (githubIssue.body != "PLACEHOLDER")
+                    appendIssueCardToPage(githubIssue);
             });
         }
 
@@ -360,7 +361,7 @@
     <div class="template" id="articlePair">
         <section>
             <div class="articleCard">
-                <h2 class="articleCardHeader">1 Header asd fa sdf asd fasdfasdfasd fasdf fadfasdfasdfs asdf asdfasd ffadfa asfds</h2>
+                <h2 class="articleCardHeader"><span class="articleCardHeaderSpan">1 Header asd fa sdf asd fasdfasdfasd fasdf fadfasdfasdfs asdf asdfasd ffadfa asfds</span></h2>
                 <div class="articleCardBottomLine">
                     <time>22/02/2022</time>
                     <span>12 comments</span>
