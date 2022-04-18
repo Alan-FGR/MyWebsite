@@ -59,8 +59,6 @@ header:before {
 
 .headerData {
     display: flex;
-    /* flex: 1; */
-    /* justify-content: right; */
     animation: revealLater 1.5s ease;
 }
 
@@ -71,8 +69,7 @@ header:before {
 
 .headerIcons {
     display: flex;
-    /* flex: 1; */
-    justify-content: right;
+    justify-content: flex-end;
     margin-top: 1em;
 }
 
@@ -263,7 +260,7 @@ section>*>h2 {
 }
 
 section.selected .articleCard {
-    /* background-image: none; */
+    background-image: none;
 }
 
 .articleCard>* {
